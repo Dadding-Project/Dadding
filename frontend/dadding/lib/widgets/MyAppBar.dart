@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter_svg/svg.dart';
 
 class MyAppBar extends StatelessWidget {
   final VoidCallback onNotificationPressed;
@@ -31,7 +31,12 @@ class MyAppBar extends StatelessWidget {
       backgroundColor: const Color(0xff3B6DFF),
       actions: [
         IconButton(
-          icon: const Icon(Icons.notifications),
+          //icon: const Icon(Icons.notifications),
+          icon: SvgPicture.asset(
+            'assets/icons/notification.svg',
+            width: 18,
+            height: 20.13,
+          ),
           onPressed: onNotificationPressed,
           color: Colors.white,
         ),

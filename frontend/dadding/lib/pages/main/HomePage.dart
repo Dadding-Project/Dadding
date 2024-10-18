@@ -47,8 +47,21 @@ class UserProfileHeader extends StatelessWidget {
   }
 }
 
-class SearchBar extends StatelessWidget {
+class SearchBar extends StatefulWidget {
   const SearchBar({super.key});
+
+  @override
+  State<SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<SearchBar> {
+  final _textController = TextEditingController();
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +75,10 @@ class SearchBar extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: TextField(
+          controller: _textController,
+          onSubmitted: (String value) {
+            print('Search submitted: $value');
+          },
           decoration: InputDecoration(
             hintText: '관심있는 내용을 검색해보세요!',
             hintStyle: const TextStyle(
@@ -70,13 +87,19 @@ class SearchBar extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),          
-            suffixIcon: Container(
-              padding: const EdgeInsets.all(10),
-              child: const Icon(
-                Icons.search,
-                size: 30,
-                color: Color(0xFF3B6DFF),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            suffixIcon: GestureDetector(
+              onTap: () {
+                print('Search icon tapped: ${_textController.text}');
+              },
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                child: const Icon(
+                  Icons.search,
+                  size: 30,
+                  color: Color(0xFF3B6DFF),
+                ),
               ),
             ),
           ),
@@ -267,7 +290,7 @@ class PostCard extends StatelessWidget {
                       width: 15,
                       height: 15,
                     ),
-                  ]
+                  ],
                 ),
               ),
             ],
@@ -277,7 +300,6 @@ class PostCard extends StatelessWidget {
     );
   }
 }
-
 
 class Post {
   final String title;
