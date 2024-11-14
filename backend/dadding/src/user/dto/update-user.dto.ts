@@ -1,11 +1,8 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateUserDto } from './create-user.dto';
-import { IsArray, IsEmail, IsString } from 'class-validator';
+import { IsArray, IsDate, IsEmail, IsIn, IsString } from 'class-validator';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
-  @IsString()
-  description: string;
-
   @IsString()
   displayName: string;
 
@@ -17,4 +14,14 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @IsString()
   profilePicture: string;
+
+  @IsString()
+  tags: string;
+
+  @IsDate()
+  birthDate: Date;
+
+  @IsString()
+  @IsIn(['male', 'other'])
+  gender: string;
 }

@@ -17,8 +17,9 @@ export class UserService {
     try {
       const user: User = {
         ...createUserDto,
-        posts: this.formatPosts(createUserDto.posts),
+        posts: '',
         createdAt: new Date(),
+        tags: '',
       };
       const id = await this.userRepository.create(user);
       return this.responseStrategy.success('User created successfully', {
