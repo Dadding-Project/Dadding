@@ -3,14 +3,17 @@ import 'package:dadding/pages/main/HomePage.dart';
 import 'package:dadding/pages/main/PostPage.dart';
 import 'package:dadding/pages/main/ProfilePage.dart';
 import 'package:dadding/pages/notification/NotificationPage.dart';
+import 'package:dadding/pages/post/CreatePostPage.dart';
 import 'package:dadding/widgets/MyAppBar.dart';
 import 'package:dadding/widgets/MyBottomNavigationBar.dart';
 import 'package:flutter/material.dart';
+import 'package:get/route_manager.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _MainPageState createState() => _MainPageState();
 }
 
@@ -35,6 +38,7 @@ class _MainPageState extends State<MainPage> {
               MaterialPageRoute(builder: (context) => const NotificationPage()),
             );
           },
+          currentIndex: _currentIndex
         ),
       ),
       body: pages[_currentIndex],
@@ -43,7 +47,9 @@ class _MainPageState extends State<MainPage> {
         height: 58.09, 
         child: FloatingActionButton(
           backgroundColor: const Color(0xff3B6DFF),
-          onPressed: () {},
+          onPressed: () {
+            Get.to(() => const CreatePostPage());
+          },
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 36),
         ),
