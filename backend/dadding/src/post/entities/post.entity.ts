@@ -5,8 +5,7 @@ export interface Post {
   authorId: string;
   tags: Array<string>;
   commentCount: number;
-  likeCount: number;
-  likedBy: string;
+  images: Array<string>;
   createdAt: Date;
   updatedAt: Date | null;
 }

@@ -17,8 +17,8 @@ export class PostService {
     try {
       const post: Post = {
         ...createPostDto,
-        likedBy: this.formatLikedBy(createPostDto.likedBy),
         createdAt: new Date(),
+        commentCount: 0,
         updatedAt: null,
       };
       const id = await this.postRepository.create(post);
@@ -61,7 +61,6 @@ export class PostService {
       }
       const updatedPost: Partial<Post> = {
         ...updatePostDto,
-        likedBy: this.formatLikedBy(updatePostDto.likedBy),
         updatedAt: new Date(),
       };
       await this.postRepository.update(id, updatedPost);
