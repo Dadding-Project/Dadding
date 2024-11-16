@@ -1,4 +1,9 @@
+import 'package:dadding/pages/main/LoginPage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -19,14 +24,20 @@ class _MealPageState extends State<NotificationPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: SvgPicture.asset('assets/icons/back-arrow.svg'),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
       ),
-      body: const Center(
-        child: Text('Notification Page'),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            FirebaseAuth.instance.signOut();
+            Get.offAll(() => const LoginPage());
+          },
+          child: const Text('Logout'),
+        )
       )
     );
   }

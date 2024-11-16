@@ -1,11 +1,19 @@
+import 'package:dadding/firebase_options.dart';
 import 'package:dadding/pages/main/ChatPage.dart';
-import 'package:dadding/pages/main/MainPage.dart';
+import 'package:dadding/pages/MainPage.dart';
+import 'package:dadding/pages/main/LoginPage.dart';
 import 'package:dadding/pages/main/PostPage.dart';
 import 'package:dadding/pages/main/ProfilePage.dart';
+import 'package:dadding/pages/post/CreatePostPage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/route_manager.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(const MainApp());
 }
 
@@ -26,8 +34,10 @@ class _MainAppState extends State<MainApp> {
         GetPage(name: '/post', page: () => const PostPage()),
         GetPage(name: '/chat', page: () => const ChatPage()),
         GetPage(name: '/profile', page: () => const ProfilePage()),
+        GetPage(name: '/create-post', page: () => const CreatePostPage()),
+        GetPage(name: '/login', page: () => const LoginPage()),
       ],
-      initialRoute: '/login', 
+      initialRoute: FirebaseAuth.instance.currentUser == null ? '/login' : '/',
       debugShowCheckedModeBanner: false,
     );
   }
