@@ -1,5 +1,4 @@
-import 'dart:convert';
-
+import 'package:dadding/api/UserApi.dart';
 import 'package:dadding/pages/signup/InformationPage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,7 +6,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:dadding/pages/MainPage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -142,12 +140,13 @@ class _LoginPageState extends State<LoginPage> {
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
       final User? user = userCredential.user;
 
-      String uid = user!.uid;
-
-      // TODO: uid로 유저 검색하고 없으면 회원가입
-      Get.offAll(() => const InformationPage());
+      final userResponse = await UserApi().getUserById(user!.uid);
+      if (userResponse['status'] == 404) {
+        Get.offAll(() => const InformationPage());
+      } else {
+        Get.offAll(() => const MainPage());
+      }
       
-      //Get.offAll(() => const MainPage());
     } catch (e) {
       print('Error during Google sign in: $e');
     } finally {

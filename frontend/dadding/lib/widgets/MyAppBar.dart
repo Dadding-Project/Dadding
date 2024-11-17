@@ -15,37 +15,65 @@ class MyAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return AppBar(
-          scrolledUnderElevation: 0,
-          title: Column(
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'DADDING',
-                  style: TextStyle(
-                    color: currentIndex != 1 ? Colors.white : const Color(0xff3B6DFF),
-                    fontSize: constraints.maxWidth * 0.055,
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w900,
+        return currentIndex != 2 ? 
+          AppBar(
+            scrolledUnderElevation: 0,
+            title: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'DADDING',
+                    style: TextStyle(
+                      color: currentIndex != 1 ? Colors.white : const Color(0xff3B6DFF),
+                      fontSize: constraints.maxWidth * 0.055,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
+              ],
+            ),
+            backgroundColor: currentIndex == 1 ? Colors.white : const Color(0xff3B6DFF),
+            actions: [
+              IconButton(
+                icon: SvgPicture.asset(
+                  'assets/icons/notification.svg',
+                  width: constraints.maxWidth * 0.05, 
+                  height: constraints.maxWidth * 0.05,
+                  color: currentIndex != 1 ? Colors.white : const Color(0xff3B6DFF),
+                ),
+                onPressed: onNotificationPressed,
               ),
             ],
-          ),
-          backgroundColor: currentIndex == 1 ? Colors.white : const Color(0xff3B6DFF),
-          actions: [
-            IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/notification.svg',
-                width: constraints.maxWidth * 0.05, 
-                height: constraints.maxWidth * 0.05,
-                color: currentIndex != 1 ? Colors.white : const Color(0xff3B6DFF),
+          ) : 
+          AppBar(
+            scrolledUnderElevation: 0,
+            backgroundColor: Colors.white,
+            title: const Text(
+              '채팅',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 22,
+                fontFamily: 'Pretendard',
+                fontWeight: FontWeight.w500,
               ),
-              onPressed: onNotificationPressed,
             ),
-          ],
-        );
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: SvgPicture.asset(
+                  'assets/icons/search.svg',
+                  width: constraints.maxWidth * 0.06, 
+                  height: constraints.maxWidth * 0.06,
+                ),
+                onPressed: () {
+
+                },
+              ),
+            ],
+          );
       },
     );
   }

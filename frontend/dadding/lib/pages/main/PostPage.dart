@@ -1,54 +1,13 @@
+import 'package:dadding/api/PostApi.dart';
+import 'package:dadding/api/UserApi.dart';
+import 'package:dadding/util/Post.dart';
 import 'package:dadding/widgets/PostCard.dart';
-import 'package:dadding/widgets/UserTag.dart';
+import 'package:dadding/widgets/UserTags.dart';
+import 'package:dadding/widgets/skeleton/PostListSkeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:dadding/widgets/SearchBar.dart' as custom;
-
-class Post {
-  final String title;
-  final String content;
-  final List<String> tags;
-  final String author;
-  final String authorInfo;
-  final List<String> images;
-
-  const Post({
-    required this.title,
-    required this.content,
-    required this.tags,
-    required this.author,
-    required this.authorInfo,
-    required this.images,
-  });
-}
-
-final List<Post> samplePosts = [
-  const Post(
-    title: '아들과 다양한 활동을 하고 싶습니다.',
-    content: '아들과 정말 좋은 추억을 만들고 싶은데 무엇을 하는 것이 아들이 나중에 좋은 기억으로 될 수 있을까요?',
-    tags: ['아빠', '아들과'],
-    author: '낚**',
-    authorInfo: '40대 / 남',
-    images: ['url1', 'url2'],
-  ),
-  const Post(
-    title: '14살 아들과 어떤 이야기 하나요?',
-    content: '14살 아들과 어떤 주제로 이야기를 해야 할지 잘 모르겠습니다. 보통 무슨 이야기하나요?',
-    tags: ['아빠', '아들과'],
-    author: '바**',
-    authorInfo: '30대 / 남',
-    images: ['url1', 'url2'],
-  ),
-];
-
-List<Post> searchPosts(String query) {
-  if (query.isEmpty) return samplePosts;
-  
-  final searchLower = query.toLowerCase();
-  return samplePosts.where((post) {
-    return post.title.toLowerCase().contains(searchLower) || 
-           post.content.toLowerCase().contains(searchLower);
-  }).toList();
-}
+import 'package:dadding/util/User.dart' as custom;
+import 'package:intl/intl.dart';
 
 class PostPage extends StatefulWidget {
   const PostPage({super.key});
@@ -58,10 +17,42 @@ class PostPage extends StatefulWidget {
 }
 
 class _PostPageState extends State<PostPage> {
-  String _searchQuery = '';
+  late Future<Map<String, dynamic>> _dataFuture;
 
-  void _updateSearchQuery(String query) {
-    setState(() => _searchQuery = query);
+  Future<Map<String, dynamic>> fetchData() async {
+    final posts = await fetchPosts();
+    
+    final userFutures = posts.map((post) => fetchUser(post.authorId)).toList();
+    final users = await Future.wait(userFutures);
+    
+    final postsWithUsers = Map.fromIterables(
+      posts.map((post) => post.id),
+      users,
+    );
+
+    return {
+      'posts': posts,
+      'postsWithUsers': postsWithUsers,
+    };
+  }
+
+  Future<List<Post>> fetchPosts() async {
+    final api = await PostApi().getPosts();
+    List<Post> posts = Post.fromJsonList(api);
+    posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return posts;
+  }
+
+  Future<custom.User> fetchUser(String authorId) async {
+    final api = await UserApi().getUserById(authorId);
+    custom.User user = custom.User.fromJson(api['data']);
+    return user;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _dataFuture = fetchData();
   }
 
   @override
@@ -71,9 +62,33 @@ class _PostPageState extends State<PostPage> {
         color: Colors.white,
         child: Column(
           children: [
-            UserProfileHeader(onSearch: _updateSearchQuery),
+            const UserProfileHeader(),
             Expanded(
-              child: PostListSection(searchQuery: _searchQuery),
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: FutureBuilder<Map<String, dynamic>>(
+                  future: _dataFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const PostListSkeleton();
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    } else if (!snapshot.hasData) {
+                      return const Center(child: Text('데이터를 불러오지 못했습니다.'));
+                    } else {
+                      final posts = snapshot.data!['posts'] as List<Post>;
+                      final postsWithUsers = snapshot.data!['postsWithUsers'] as Map<String, custom.User>;
+                      return PostListSection(
+                        posts: posts,
+                        postsWithUsers: postsWithUsers,
+                      );
+                    }
+                  },
+                ),
+              ),
             ),
           ],
         ),
@@ -82,10 +97,62 @@ class _PostPageState extends State<PostPage> {
   }
 }
 
-class UserProfileHeader extends StatelessWidget {
-  final Function(String) onSearch;
+class PostListSection extends StatelessWidget {
+  final List<Post> posts;
+  final Map<String, custom.User> postsWithUsers;
+  
+  static const _titleStyle = TextStyle(
+    fontSize: 22,
+    fontFamily: 'Pretendard',
+    fontWeight: FontWeight.w700,
+  );
 
-  const UserProfileHeader({super.key, required this.onSearch});
+  const PostListSection({
+    super.key, 
+    required this.posts,
+    required this.postsWithUsers,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = MediaQuery.of(context).size.width * 0.05;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.all(padding),
+          child: const Text('최신 게시글 📕', style: _titleStyle),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: EdgeInsets.symmetric(horizontal: padding),
+            itemCount: posts.length,
+            itemBuilder: (context, index) {
+              final post = posts[index];
+              final user = postsWithUsers[post.id]!;
+              return Padding(
+                padding: EdgeInsets.only(bottom: padding),
+                child: PostCard(
+                  id: post.id,
+                  title: post.title,
+                  content: post.content,
+                  tags: post.tags,
+                  author: '${user.displayName.substring(0, 1)}**',
+                  authorInfo: '${custom.User.calculateAge(DateFormat('yyyy.MM.dd').format(user.birthDate))}세 / ${user.gender == 'male' ? '남' : '기타'}',
+                  commentCount: post.commentCount,
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class UserProfileHeader extends StatelessWidget {
+  const UserProfileHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -112,69 +179,6 @@ class UserProfileHeader extends StatelessWidget {
           const UserTags(),
         ],
       ),
-    );
-  }
-}
-
-class UserTags extends StatelessWidget {
-  const UserTags({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Wrap(
-      spacing: 8,
-      children: [
-        UserTag(label: '아버지'),
-        UserTag(label: '아빠'),
-        UserTag(label: '38개월아빠'),
-      ],
-    );
-  }
-}
-
-class PostListSection extends StatelessWidget {
-  final String searchQuery;
-  static const _titleStyle = TextStyle(
-    fontSize: 22,
-    fontFamily: 'Pretendard',
-    fontWeight: FontWeight.w700,
-  );
-
-  const PostListSection({super.key, required this.searchQuery});
-
-  @override
-  Widget build(BuildContext context) {
-    final padding = MediaQuery.of(context).size.width * 0.05;
-    final filteredPosts = searchPosts(searchQuery);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.all(padding),
-          child: const Text('최신 게시글 📕', style: _titleStyle),
-        ),
-        Expanded(
-          child: ListView.builder(
-            padding: EdgeInsets.symmetric(horizontal: padding),
-            itemCount: filteredPosts.length,
-            itemBuilder: (context, index) {
-              final post = filteredPosts[index];
-              return Padding(
-                padding: EdgeInsets.only(bottom: padding),
-                child: PostCard(
-                  title: post.title,
-                  content: post.content,
-                  tags: post.tags,
-                  author: post.author,
-                  authorInfo: post.authorInfo,
-                  images: post.images
-                ),
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }

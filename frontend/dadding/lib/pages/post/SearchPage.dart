@@ -1,43 +1,12 @@
+import 'package:dadding/api/PostApi.dart';
+import 'package:dadding/api/UserApi.dart';
+import 'package:dadding/util/Post.dart';
+import 'package:dadding/util/User.dart' as custom;
 import 'package:dadding/widgets/PostCard.dart';
+import 'package:dadding/widgets/skeleton/PostListSkeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-
-class Post {
-  final String title;
-  final String content;
-  final List<String> tags;
-  final String author;
-  final String authorInfo;
-  final List<String> images;
-
-  const Post({
-    required this.title,
-    required this.content,
-    required this.tags,
-    required this.author,
-    required this.authorInfo,
-    required this.images,
-  });
-}
-
-final List<Post> samplePosts = [
-  const Post(
-    title: '아들과 다양한 활동을 하고 싶습니다.',
-    content: '아들과 정말 좋은 추억을 만들고 싶은데 무엇을 하는 것이 아들이 나중에 좋은 기억으로 될 수 있을까요?',
-    tags: ['아빠', '아들과'],
-    author: '낚**',
-    authorInfo: '40대 / 남',
-    images: ['url1', 'url2'],
-  ),
-  const Post(
-    title: '14살 아들과 어떤 이야기 하나요?',
-    content: '14살 아들과 어떤 주제로 이야기를 해야 할지 잘 모르겠습니다. 보통 무슨 이야기하나요?',
-    tags: ['아빠', '아들과'],
-    author: '바**',
-    authorInfo: '30대 / 남',
-    images: ['url1', 'url2'],
-  ),
-];
+import 'package:intl/intl.dart';
 
 class SearchPage extends StatefulWidget {
   final String searchQuery;
@@ -48,7 +17,6 @@ class SearchPage extends StatefulWidget {
   });
 
   @override
-  // ignore: library_private_types_in_public_api
   _SearchPageState createState() => _SearchPageState();
 }
 
@@ -56,21 +24,54 @@ class _SearchPageState extends State<SearchPage> {
   static const _listPadding = EdgeInsets.symmetric(horizontal: 20);
   static const _cardPadding = EdgeInsets.only(bottom: 20);
 
+  late Future<Map<String, dynamic>> _dataFuture;
+  List<Post> _allPosts = [];
   List<Post> _filteredPosts = [];
+
+  Future<Map<String, dynamic>> fetchData() async {
+    final posts = await fetchPosts();
+    
+    final userFutures = posts.map((post) => fetchUser(post.authorId)).toList();
+    final users = await Future.wait(userFutures);
+
+    return {
+      'posts': posts,
+      'user': users.isNotEmpty ? users.first : null,
+    };
+  }
+
+  Future<List<Post>> fetchPosts() async {
+    final api = await PostApi().getPosts();
+    List<Post> posts = Post.fromJsonList(api);
+    posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return posts.toList();
+  }
+
+  Future<custom.User> fetchUser(String authorId) async {
+    final api = await UserApi().getUserById(authorId);
+    custom.User user = custom.User.fromJson(api['data']);
+    return user;
+  }
+
+  void _filterPosts(String query, List<Post> posts) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredPosts = _allPosts;
+      } else {
+        _filteredPosts = _allPosts.where((post) {
+          return post.title.toLowerCase().contains(query.toLowerCase());
+        }).toList();
+      }
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    _filterPosts(widget.searchQuery);
-  }
-
-  void _filterPosts(String query) {
-    setState(() {
-      _filteredPosts = samplePosts.where((post) {
-        return post.title.contains(query) ||
-               post.content.contains(query) ||
-               post.tags.any((tag) => tag.contains(query));
-      }).toList();
+    _dataFuture = fetchData().then((data) {
+      _allPosts = data['posts'];
+      _filterPosts(widget.searchQuery, _allPosts);
+      return data;
     });
   }
 
@@ -87,53 +88,83 @@ class _SearchPageState extends State<SearchPage> {
             Navigator.pop(context);
           },
         ),
-        toolbarHeight: 80, 
+        toolbarHeight: 80,
         title: SearchBar(
           searchQuery: widget.searchQuery,
           onSearch: (query) {
-            _filterPosts(query);
+            _filterPosts(query, _allPosts);
           },
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 25, top: 30),
-            child: Text(
-              '${_filteredPosts.length}개의 글이 있어요',
-              style: const TextStyle(
-                color: Color(0xFF888888),
-                fontSize: 16,
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12,),
-          Expanded(
-            child: ListView.builder(
-              padding: _listPadding,
-              itemCount: _filteredPosts.length,
-              itemBuilder: (context, index) {
-                final post = _filteredPosts[index];
-                return Padding(
-                  padding: _cardPadding,
-                  child: PostCard(
-                    title: post.title,
-                    content: post.content,
-                    tags: post.tags,
-                    author: post.author,
-                    authorInfo: post.authorInfo,
-                    images: post.images
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _dataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const PostListSkeleton();
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text(snapshot.error.toString()),
+            );
+          } else if (!snapshot.hasData) {
+            return const Center(child: Text('데이터를 불러오지 못했습니다.'));
+          } else {
+            final user = snapshot.data!['user'] as custom.User;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 25, top: 30),
+                  child: Text(
+                    '${_filteredPosts.length}개의 글이 있어요',
+                    style: const TextStyle(
+                      color: Color(0xFF888888),
+                      fontSize: 16,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                );
-              },
-            ),
-          ),
-        ],
-      )
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: ListView.builder(
+                    padding: _listPadding,
+                    itemCount: _filteredPosts.length,
+                    itemBuilder: (context, index) {
+                      final post = _filteredPosts[index];
+                      return Padding(
+                        padding: _cardPadding,
+                        child: PostCard(
+                          id: post.id,
+                          title: post.title,
+                          content: post.content,
+                          tags: post.tags,
+                          author: '${user.displayName.substring(0, 1)}**',
+                          authorInfo:
+                              '${_calculateAge(DateFormat('yyyy.MM.dd').format(user.birthDate))}세 / ${user.gender == 'male' ? '남' : '기타'}',
+                          commentCount: post.commentCount,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          }
+        },
+      ),
     );
+  }
+
+  int _calculateAge(String birth) {
+    DateTime birthDate = DateTime.parse(birth.replaceAll('.', '-'));
+    DateTime today = DateTime.now();
+    int age = today.year - birthDate.year;
+    if (today.month < birthDate.month ||
+        (today.month == birthDate.month && today.day < birthDate.day)) {
+      age--;
+    }
+    return age;
   }
 }
 

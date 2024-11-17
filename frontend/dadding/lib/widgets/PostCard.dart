@@ -1,23 +1,28 @@
+import 'package:dadding/pages/post/PostInnerPage.dart';
 import 'package:dadding/widgets/UserTag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/route_manager.dart';
 
 class PostCard extends StatelessWidget {
+  final String id;
   final String title;
   final String content;
   final List<String> tags;
   final String author;
   final String authorInfo;
-  final List<String> images;
+  final int commentCount;
 
   const PostCard({
     super.key,
+    required this.id,
     required this.title,
     required this.content,
     required this.tags,
     required this.author,
     required this.authorInfo,
-    required this.images,
+    required this.commentCount,
   });
 
   @override
@@ -80,7 +85,7 @@ class PostCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Column(
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
@@ -91,9 +96,29 @@ class PostCard extends StatelessWidget {
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 7.59),
                         Text(
                           authorInfo,
+                          style: const TextStyle(
+                            color: Color(0xFFAAAAAA),
+                            fontSize: 14,
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        const SizedBox(width: 7.59),
+                        const Text(
+                          '·',
+                          style: TextStyle(
+                            color: Color(0xFFAAAAAA),
+                            fontSize: 14,
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(width: 8.27),
+                        Text(
+                          '$commentCount개',
                           style: const TextStyle(
                             color: Color(0xFFAAAAAA),
                             fontSize: 14,
@@ -105,7 +130,9 @@ class PostCard extends StatelessWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Get.to(() => PostInnerPage(postId: id));
+                    },
                     child: Row(
                       children: [
                         const Text(

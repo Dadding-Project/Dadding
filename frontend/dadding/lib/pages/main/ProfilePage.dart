@@ -1,67 +1,93 @@
+import 'package:dadding/api/PostApi.dart';
+import 'package:dadding/api/UserApi.dart';
+import 'package:dadding/pages/user/MyPage.dart';
+import 'package:dadding/util/Post.dart';
 import 'package:dadding/widgets/PostCard.dart';
-import 'package:dadding/widgets/UserTag.dart';
+import 'package:dadding/widgets/UserTags.dart';
+import 'package:dadding/widgets/skeleton/ProfileSkeleton.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:dadding/util/User.dart' as custom;
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/route_manager.dart';
+import 'package:intl/intl.dart';
 
-class Post {
-  final String title;
-  final String content;
-  final List<String> tags;
-  final String author;
-  final String authorInfo;
-  final List<String> images;
-
-  const Post({
-    required this.title,
-    required this.content,
-    required this.tags,
-    required this.author,
-    required this.authorInfo,
-    required this.images,
-  });
-}
-
-final List<Post> samplePosts = [
-  const Post(
-    title: '아들과 다양한 활동을 하고 싶습니다.',
-    content: '아들과 정말 좋은 추억을 만들고 싶은데 무엇을 하는 것이 아들이 나중에 좋은 기억으로 될 수 있을까요?',
-    tags: ['아빠', '아들과'],
-    author: '임정우',
-    authorInfo: '40대 / 남',
-    images: ['url1', 'url2'],
-  ),
-  const Post(
-    title: '14살 아들과 어떤 이야기 하나요?',
-    content: '14살 아들과 어떤 주제로 이야기를 해야 할지 잘 모르겠습니다. 보통 무슨 이야기하나요?',
-    tags: ['아빠', '아들과'],
-    author: '임정우',
-    authorInfo: '40대 / 남',
-    images: ['url1', 'url2'],
-  ),
-];
-
-class ProfilePage extends StatelessWidget {
-  static const _backgroundColor = Color(0xFF3B6DFF);
-  
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  static const _backgroundColor = Color(0xFF3B6DFF);
+  
+  late Future<Map<String, dynamic>> _dataFuture;
+
+  Future<Map<String, dynamic>> fetchData() async {
+    final postsFuture = fetchPosts();
+    final userFuture = fetchUser();
+
+    final results = await Future.wait([postsFuture, userFuture]);
+    return {
+      'posts': results[0],
+      'user': results[1],
+    };
+  }
+
+  Future<List<Post>> fetchPosts() async {
+    final api = await PostApi().getPosts();
+    List<Post> posts = Post.fromJsonList(api);
+    posts = posts.where((post) => post.authorId == FirebaseAuth.instance.currentUser!.uid).toList();
+    return posts;
+  }
+
+  Future<custom.User> fetchUser() async {
+    final api = await UserApi().getUserById(FirebaseAuth.instance.currentUser!.uid);
+    custom.User user = custom.User.fromJson(api['data']);
+    return user;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _dataFuture = fetchData();
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         color: _backgroundColor,
-        child: Column(
-          children: [
-            const UserProfileHeader(),
-            Expanded(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: _dataFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const ProfileSkeleton();
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData) {
+              return const Center(child: Text('데이터를 불러오지 못했습니다.'));
+            }
+
+            final user = snapshot.data!['user'] as custom.User;
+            final posts = snapshot.data!['posts'] as List<Post>;
+
+            return Column(
+              children: [
+                UserProfileHeader(user: user),
+                Expanded(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    child: PostListSection(posts: posts, user: user),
+                  ),
                 ),
-                child: const PostListSection(),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
@@ -70,19 +96,23 @@ class ProfilePage extends StatelessWidget {
 
 class UserProfileHeader extends StatelessWidget {
   static const _padding = EdgeInsets.all(20);
+  final custom.User user;
   
-  const UserProfileHeader({super.key});
+  const UserProfileHeader({
+    super.key,
+    required this.user,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: _padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          UserInfo(),
-          SizedBox(height: 13),
-          UserTags(),
+          UserInfo(user: user),
+          const SizedBox(height: 13),
+          const UserTags(),
         ],
       ),
     );
@@ -104,27 +134,37 @@ class UserInfo extends StatelessWidget {
     fontWeight: FontWeight.w500,
   );
 
-  const UserInfo({super.key});
+  final custom.User user;
+
+  const UserInfo({
+    super.key,
+    required this.user,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final age = custom.User.calculateAge(DateFormat('yyyy.MM.dd').format(user.birthDate));
+    
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () => {
+        Get.to(() => const MyPage()),
       },
-      child: const Row(
+      child: Row(
         children: [
-          CircleAvatar(
+          const CircleAvatar(
             radius: 42,
             backgroundImage: NetworkImage("https://via.placeholder.com/84x84"),
           ),
-          SizedBox(width: 19),
+          const SizedBox(width: 19),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('임정우', style: _nameStyle),
-                Divider(color: Colors.white, thickness: 0.5),
-                Text('40대 / 남', style: _infoStyle),
+                Text(user.displayName, style: _nameStyle),
+                const Divider(color: Colors.white, thickness: 0.5),
+                Text('$age세 / ${user.gender == 'male' ? '남' : '기타'}', 
+                  style: _infoStyle),
               ],
             ),
           ),
@@ -134,60 +174,49 @@ class UserInfo extends StatelessWidget {
   }
 }
 
-class UserTags extends StatelessWidget {
-  const UserTags({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        UserTag(label: '아버지'),
-        UserTag(label: '아빠'),
-        UserTag(label: '사춘기 애 아빠'),
-      ],
-    );
-  }
-}
-
 class PostListSection extends StatelessWidget {
+  final List<Post> posts;
+  final custom.User user;
+  
   static const _titleStyle = TextStyle(
     fontSize: 22,
     fontFamily: 'Pretendard',
     fontWeight: FontWeight.w700,
   );
-  
-  static const _padding = EdgeInsets.all(20);
-  static const _listPadding = EdgeInsets.symmetric(horizontal: 20);
-  static const _cardPadding = EdgeInsets.only(bottom: 20);
 
-  const PostListSection({super.key});
+  const PostListSection({
+    super.key, 
+    required this.posts,
+    required this.user,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final padding = MediaQuery.of(context).size.width * 0.05;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: _padding,
-          child: Text('내가 올린 글 📕', style: _titleStyle),
+        Padding(
+          padding: EdgeInsets.all(padding),
+          child: const Text('내가 올린 글 📕', style: _titleStyle),
         ),
         Expanded(
           child: ListView.builder(
-            padding: _listPadding,
-            itemCount: samplePosts.length,
+            padding: EdgeInsets.symmetric(horizontal: padding),
+            itemCount: posts.length,
             itemBuilder: (context, index) {
-              final post = samplePosts[index];
+              final post = posts[index];
               return Padding(
-                padding: _cardPadding,
+                padding: EdgeInsets.only(bottom: padding),
                 child: PostCard(
+                  id: post.id,
                   title: post.title,
                   content: post.content,
                   tags: post.tags,
-                  author: post.author,
-                  authorInfo: post.authorInfo,
-                  images: post.images
+                  author: user.displayName,
+                  authorInfo: "${custom.User.calculateAge(DateFormat('yyyy.MM.dd').format(user.birthDate))}세 / ${user.gender == 'male' ? '남' : '기타'}",
+                  commentCount: post.commentCount,
                 ),
               );
             },

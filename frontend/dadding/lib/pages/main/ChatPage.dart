@@ -8,6 +8,9 @@ class ChatPage extends StatefulWidget {
   _ChatPageState createState() => _ChatPageState();
 }
 
+List<String> chatList = [
+];
+
 class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
@@ -16,8 +19,16 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text("챗 페이지"),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: ListView.builder(
+        itemCount: chatList.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(chatList[index]),
+          );
+        },
+      ),
     );
   }
 }

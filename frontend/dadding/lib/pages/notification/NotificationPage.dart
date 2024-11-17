@@ -10,10 +10,10 @@ class NotificationPage extends StatefulWidget {
 
   @override
   // ignore: library_private_types_in_public_api
-  _MealPageState createState() => _MealPageState();
+  NotificationPageState createState() => NotificationPageState();
 }
 
-class _MealPageState extends State<NotificationPage> {
+class NotificationPageState extends State<NotificationPage> {
   @override
   void initState() {
     super.initState();
@@ -22,7 +22,10 @@ class _MealPageState extends State<NotificationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.white,
         leading: IconButton(
           icon: SvgPicture.asset('assets/icons/back-arrow.svg'),
           onPressed: () {
@@ -30,14 +33,8 @@ class _MealPageState extends State<NotificationPage> {
           },
         ),
       ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            FirebaseAuth.instance.signOut();
-            Get.offAll(() => const LoginPage());
-          },
-          child: const Text('Logout'),
-        )
+      body: const Center(
+        child: Text('Notification Page'),
       )
     );
   }

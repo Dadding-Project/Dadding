@@ -10,6 +10,9 @@ export class CreatePostDto {
   @IsString()
   title: string;
 
+  @IsString()
+  comments: string;
+
   @IsArray()
   tags: Array<string>;
 

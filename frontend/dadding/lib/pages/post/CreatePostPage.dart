@@ -1,5 +1,9 @@
+import 'package:dadding/api/PostApi.dart';
+import 'package:dadding/pages/MainPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/route_manager.dart';
 import 'package:image_picker/image_picker.dart';
 
 class CreatePostPage extends StatefulWidget {
@@ -192,83 +196,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
     );
   }
 
-  void _showCategoryDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        String newCategory = '';
-        return AlertDialog(
-          backgroundColor: const Color(0xFFE2E2E2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          title: const Center(
-            child: Text(
-              '카테고리 추가',
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontSize: 17,
-                fontWeight: FontWeight.w600
-              ),
-            ),
-          ),
-          content: TextField(
-            cursorColor: const Color(0xFF000000),
-            onChanged: (value) {
-              newCategory = value;
-            },
-            decoration: const InputDecoration(
-              hintText: "새 카테고리를 입력하세요",
-              focusColor: Color(0xFF898989),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(width: 1, color: Color(0xFF898989)),
-              ),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(width: 1, color: Color(0xFF898989)),
-              ),
-            ),
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: <Widget>[
-            TextButton(
-              child: const Text(
-                '돌아가기',
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF007AFF)
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text(
-                '추가하기',
-                style: TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF007AFF)
-                ),
-              ),
-              onPressed: () {
-                setState(() {
-                  if (!_categories.contains(newCategory)) {
-                  _categories.add(newCategory);
-                  }
-                });
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildContentSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,7 +321,16 @@ class _CreatePostPageState extends State<CreatePostPage> {
   Widget _buildSubmitButton() {
     return GestureDetector(
       onTap: _isFormValid ? () {
+        PostApi().createPost(
+          _contentController.text, 
+          _titleController.text, 
+          _categories, 
+          [],
+        );
 
+        //TODO: 이미지 업로드 구현
+
+        Get.offAll(() => const MainPage());
       } : null,
       child: Container(
         width: double.infinity,
@@ -423,6 +359,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
   Widget _buildPictureCircleButton() {
     return GestureDetector(
       onTap: () {
+        
       },
       child: Container(
         width: 30,
@@ -443,16 +380,17 @@ class _CreatePostPageState extends State<CreatePostPage> {
   }
 
   Widget _buildCircleButton() {
+    bool isMaxCategories = _categories.length >= 3;
     return GestureDetector(
-      onTap: () {
+      onTap: isMaxCategories ? null : () {
         _showCategoryDialog();
       },
       child: Container(
         width: 30,
         height: 30,
-        decoration: const ShapeDecoration(
-          color: Color(0xFF3B6DFF),
-          shape: CircleBorder(),
+        decoration: ShapeDecoration(
+          color: isMaxCategories ? const Color(0xFFCCCCCC) : const Color(0xFF3B6DFF),
+          shape: const CircleBorder(),
         ),
         child: const Center(
           child: Icon(
@@ -462,6 +400,85 @@ class _CreatePostPageState extends State<CreatePostPage> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showCategoryDialog() {
+    if (_categories.length >= 3) return;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String newCategory = '';
+        return AlertDialog(
+          backgroundColor: const Color(0xFFE2E2E2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          title: const Center(
+            child: Text(
+              '카테고리 추가',
+              style: TextStyle(
+                fontFamily: 'Pretendard',
+                fontSize: 17,
+                fontWeight: FontWeight.w600
+              ),
+            ),
+          ),
+          content: TextField(
+            cursorColor: const Color(0xFF000000),
+            onChanged: (value) {
+              newCategory = value;
+            },
+            decoration: const InputDecoration(
+              hintText: "새 카테고리를 입력하세요",
+              focusColor: Color(0xFF898989),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(width: 1, color: Color(0xFF898989)),
+              ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(width: 1, color: Color(0xFF898989)),
+              ),
+            ),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                '돌아가기',
+                style: TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF007AFF)
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text(
+                '추가하기',
+                style: TextStyle(
+                  fontFamily: 'Pretendard',
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF007AFF)
+                ),
+              ),
+              onPressed: () {
+                setState(() {
+                  if (!_categories.contains(newCategory) && _categories.length < 3) {
+                    _categories.add(newCategory);
+                  }
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

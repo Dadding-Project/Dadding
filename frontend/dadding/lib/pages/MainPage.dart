@@ -42,18 +42,18 @@ class _MainPageState extends State<MainPage> {
         ),
       ),
       body: pages[_currentIndex],
-      floatingActionButton: SizedBox(
+      floatingActionButton: _currentIndex != 2 ? SizedBox(
         width: 58.09,
         height: 58.09, 
         child: FloatingActionButton(
           backgroundColor: const Color(0xff3B6DFF),
           onPressed: () {
-            Get.to(() => const CreatePostPage());
+        Get.to(() => const CreatePostPage());
           },
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 36),
         ),
-      ),
+      ) : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: MyBottomNavigationBar(
         currentIndex: _currentIndex,

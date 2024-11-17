@@ -1,15 +1,20 @@
-import 'package:dadding/pages/signup/ProfileSettingPage.dart';
+import 'package:dadding/api/UserApi.dart';
+import 'package:dadding/pages/user/MyPage.dart';
+import 'package:dadding/util/User.dart' as custom;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:intl/intl.dart';
 
-class InformationPage extends StatefulWidget {
-  const InformationPage({super.key});
+class EditProfilePage extends StatefulWidget {
+  const EditProfilePage({super.key});
 
   @override
   // ignore: library_private_types_in_public_api
-  _InformationPageState createState() => _InformationPageState();
+  _EditProfilePageState createState() => _EditProfilePageState();
 }
 
 class DateInputFormatter extends TextInputFormatter {
@@ -41,18 +46,26 @@ class DateInputFormatter extends TextInputFormatter {
 }
 
 
-class _InformationPageState extends State<InformationPage> {
+class _EditProfilePageState extends State<EditProfilePage> {
   String? _selectedGender;
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-  bool _isButtonEnabled = false;
+
+  Future<custom.User> fetchUser() async {
+    final api = await UserApi().getUserById(FirebaseAuth.instance.currentUser!.uid);
+    custom.User user = custom.User.fromJson(api['data']);
+    return user;
+  }
 
   @override
   void initState() {
     super.initState();
-    _selectedGender = '남자';
-    _nameController.addListener(_validateForm);
-    _dateController.addListener(_validateForm);
+    fetchUser().then((user) {
+      _nameController.text = user.displayName;
+      _dateController.text = DateFormat('yyyy.MM.dd').format(user.birthDate);
+      _selectedGender = user.gender == 'male' ? '남자' : '기타';
+      return user;
+    });
   }
 
   @override
@@ -62,14 +75,6 @@ class _InformationPageState extends State<InformationPage> {
     super.dispose();
   }
 
-  void _validateForm() {
-    setState(() {
-      _isButtonEnabled = _nameController.text.isNotEmpty &&
-          _dateController.text.length == 10 &&
-          _selectedGender != null;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -77,6 +82,27 @@ class _InformationPageState extends State<InformationPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
+      appBar: AppBar(
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.white,
+        leading: IconButton(
+          icon: SvgPicture.asset('assets/icons/back-arrow.svg'),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: const Text(
+          '정보 수정',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 22,
+            fontFamily: 'Pretendard',
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.only(
@@ -88,25 +114,17 @@ class _InformationPageState extends State<InformationPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '반가워요!\n정보를 작성해주세요.',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 24,
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w700,
-                ),
+              Center(
+                child: SvgPicture.asset('assets/icons/profile-setting.svg'),
               ),
-              SizedBox(height: screenHeight * 0.03),
+              const SizedBox(height: 59.9),
               _buildInfoField(
                 hintText: '이름을 작성해주세요.',
-                subText: '실명을 입력해주세요 (필수)',
                 controller: _nameController,
               ),
               SizedBox(height: screenHeight * 0.04),
               _buildInfoField(
                 hintText: '0000.00.00',
-                subText: '태어난연도를 입력해주세요 (필수)',
                 controller: _dateController,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
@@ -128,7 +146,6 @@ class _InformationPageState extends State<InformationPage> {
 
   Widget _buildInfoField({
     required String hintText,
-    required String subText,
     TextEditingController? controller,
     List<TextInputFormatter>? inputFormatters,
     int? maxLength,
@@ -182,16 +199,6 @@ class _InformationPageState extends State<InformationPage> {
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        Text(
-          subText,
-          style: const TextStyle(
-            color: Color(0xFF909090),
-            fontSize: 13,
-            fontFamily: 'Pretendard',
-            fontWeight: FontWeight.w500,
-          ),
-        ),
       ],
     );
   }
@@ -207,16 +214,6 @@ class _InformationPageState extends State<InformationPage> {
             _buildGenderButton('기타'),
           ],
         ),
-        const SizedBox(height: 10),
-        const Text(
-          '성별을 선택해주세요 (필수)',
-          style: TextStyle(
-            color: Color(0xFF909090),
-            fontSize: 13,
-            fontFamily: 'Pretendard',
-            fontWeight: FontWeight.w500,
-          ),
-        ),
       ],
     );
   }
@@ -228,7 +225,6 @@ class _InformationPageState extends State<InformationPage> {
         onTap: () {
           setState(() {
             _selectedGender = text;
-            _validateForm();
           });
         },
         child: Container(
@@ -258,19 +254,19 @@ class _InformationPageState extends State<InformationPage> {
 
   Widget _buildNextButton(double screenWidth, double screenHeight) {
     return GestureDetector(
-      onTap: _isButtonEnabled ? _onNextButtonPressed : null,
+      onTap: _onNextButtonPressed,
       child: Container(
         width: screenWidth * 0.88,
         height: screenHeight * 0.07,
         decoration: ShapeDecoration(
-          color: _isButtonEnabled ? const Color(0xFF3B6DFF) : const Color(0xFFCCCCCC),
+          color: const Color(0xFF3B6DFF),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
         ),
         child: const Center(
           child: Text(
-            '넘어가기',
+            '작성하기',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
@@ -285,10 +281,10 @@ class _InformationPageState extends State<InformationPage> {
   }
 
   _onNextButtonPressed() {
-    Get.to(() => ProfileSettingPage(
-      name: _nameController.text,
-      birth: _dateController.text,
-      gender: _selectedGender ?? '남자',
-    ));
+    //TODO 업데이트 유저 정보
+    //TODO 프로필 이미지
+    //TODO 스켈레톤 ... 적용....
+    
+    Get.offAll(() => const MyPage());
   }
 }

@@ -35,6 +35,7 @@ class _SearchBarState extends State<SearchBar> {
         borderRadius: BorderRadius.circular(25),
       ),
       child: TextField(
+        cursorColor: Colors.black,
         controller: _textController,
         onSubmitted: (value) {
           final searchQuery = _textController.text;

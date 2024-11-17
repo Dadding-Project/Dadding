@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import { IsDate, IsEmail, IsIn, IsString } from 'class-validator';
 
 export class CreateUserDto {
@@ -10,9 +11,7 @@ export class CreateUserDto {
   @IsString()
   profilePicture: string;
 
-  @IsString()
-  tags: string;
-
+  @Type(() => Date)
   @IsDate()
   birthDate: Date;
 
