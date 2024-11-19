@@ -32,9 +32,19 @@ class NotificationPageState extends State<NotificationPage> {
             Navigator.pop(context);
           },
         ),
+        title: const Text(
+          '알림',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 22,
+            fontFamily: 'Pretendard',
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: const Center(
-        child: Text('Notification Page'),
       )
     );
   }
