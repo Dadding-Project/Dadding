@@ -66,6 +66,7 @@ class PostApi {
     if (response.statusCode == 201) {
       return response;
     } else {
+      print(response.body);
       throw Exception('Failed to create post');
     }
   }

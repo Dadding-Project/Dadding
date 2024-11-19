@@ -65,4 +65,27 @@ class UserApi {
       throw Exception('Failed to create user');
     }
   }
+
+  Future<http.Response> updateUser(String displayName, String birthDate, String gender) async {
+    final url = Uri.parse('$baseUrl/${user?.uid}');
+    final idToken = await user?.getIdToken();  
+    final response = await http.patch(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $idToken',
+      },
+      body: '''{
+              "displayName" : "$displayName",
+              "birthDate" : "${DateFormat('yyyy.MM.dd').parse(birthDate).toIso8601String()}",
+              "gender" : "${gender == '남자' ? 'male' : 'other'}"
+            }'''
+    );
+
+    if (response.statusCode == 201) {
+      return response;
+    } else {
+      throw Exception('Failed to update user');
+    }
+  }
 }
