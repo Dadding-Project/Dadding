@@ -45,11 +45,11 @@ class DateInputFormatter extends TextInputFormatter {
   }
 }
 
-
 class _EditProfilePageState extends State<EditProfilePage> {
   String? _selectedGender;
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
+  bool _isButtonEnabled = false;
 
   Future<custom.User> fetchUser() async {
     final api = await UserApi().getUserById(FirebaseAuth.instance.currentUser!.uid);
@@ -64,8 +64,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
       _nameController.text = user.displayName;
       _dateController.text = DateFormat('yyyy.MM.dd').format(user.birthDate);
       _selectedGender = user.gender == 'male' ? '남자' : '기타';
+      _updateButtonState();
       return user;
     });
+
+    _nameController.addListener(_updateButtonState);
+    _dateController.addListener(_updateButtonState);
   }
 
   @override
@@ -73,6 +77,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _dateController.dispose();
     _nameController.dispose();
     super.dispose();
+  }
+
+  void _updateButtonState() {
+    setState(() {
+      _isButtonEnabled = _nameController.text.isNotEmpty &&
+          _dateController.text.isNotEmpty &&
+          _selectedGender != null;
+    });
   }
 
   @override
@@ -114,10 +126,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: SvgPicture.asset('assets/icons/profile-setting.svg'),
-              ),
-              const SizedBox(height: 59.9),
               _buildInfoField(
                 hintText: '이름을 작성해주세요.',
                 controller: _nameController,
@@ -225,6 +233,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         onTap: () {
           setState(() {
             _selectedGender = text;
+            _updateButtonState();
           });
         },
         child: Container(
@@ -254,12 +263,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Widget _buildNextButton(double screenWidth, double screenHeight) {
     return GestureDetector(
-      onTap: _onNextButtonPressed,
+      onTap: _isButtonEnabled ? _onNextButtonPressed : null,
       child: Container(
         width: screenWidth * 0.88,
         height: screenHeight * 0.07,
         decoration: ShapeDecoration(
-          color: const Color(0xFF3B6DFF),
+          color: _isButtonEnabled ? const Color(0xFF3B6DFF) : const Color(0xFFCCCCCC),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
@@ -281,10 +290,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   _onNextButtonPressed() {
-    //TODO 업데이트 유저 정보
-    //TODO 프로필 이미지
-    //TODO 스켈레톤 ... 적용....
-    
+    //TODO
+    UserApi().updateUser(_nameController.text, _dateController.text, _selectedGender!);
     Get.offAll(() => const MyPage());
   }
 }
