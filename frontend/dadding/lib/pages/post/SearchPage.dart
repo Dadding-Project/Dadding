@@ -139,10 +139,12 @@ class _SearchPageState extends State<SearchPage> {
                           title: post.title,
                           content: post.content,
                           tags: post.tags,
+                          userId: user.id,
                           author: '${user.displayName.substring(0, 1)}**',
                           authorInfo:
                               '${_calculateAge(DateFormat('yyyy.MM.dd').format(user.birthDate))}세 / ${user.gender == 'male' ? '남' : '기타'}',
                           commentCount: post.commentCount,
+                          imageUrl: user.profilePicture,
                         ),
                       );
                     },
