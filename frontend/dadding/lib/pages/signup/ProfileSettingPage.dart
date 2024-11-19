@@ -1,6 +1,7 @@
 import 'package:dadding/api/UserApi.dart';
 import 'package:dadding/pages/MainPage.dart';
-import 'package:dadding/util/User.dart';
+import 'package:dadding/util/User.dart' as custom;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -87,10 +88,10 @@ class _ProfileSettingPageState extends State<ProfileSettingPage> {
               Center(
                 child: Column(
                   children: [
-                    SvgPicture.asset(
-                      'assets/icons/profile-setting.svg',
-                    ),
-                    SizedBox(height: screenHeight * 0.03),
+                    // SvgPicture.asset(
+                    //   'assets/icons/profile-setting.svg',
+                    // ),
+                    // SizedBox(height: screenHeight * 0.03),
                     Text(
                       '${widget.name}님',
                       style: const TextStyle(
@@ -102,7 +103,7 @@ class _ProfileSettingPageState extends State<ProfileSettingPage> {
                     ),
                     SizedBox(height: screenHeight * 0.005),
                     Text(
-                        '${User.calculateAge(widget.birth)}세 / ${widget.gender == '남자' ? '남' : '기타'}',
+                        '${custom.User.calculateAge(widget.birth)}세 / ${widget.gender == '남자' ? '남' : '기타'}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Color(0xFF909090),
@@ -151,8 +152,7 @@ class _ProfileSettingPageState extends State<ProfileSettingPage> {
   }
 
   _onNextButtonPressed() {
-    //TODO 프로필 이미지 선택 
-    UserApi().createUser(widget.name, '', widget.birth, widget.gender);
+    UserApi().createUser(widget.name, FirebaseAuth.instance.currentUser?.photoURL ?? '', widget.birth, widget.gender);
     Get.offAll(() => const MainPage());
   }
 }

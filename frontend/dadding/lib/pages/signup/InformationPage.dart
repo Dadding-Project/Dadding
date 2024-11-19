@@ -1,4 +1,7 @@
+import 'package:dadding/api/UserApi.dart';
+import 'package:dadding/pages/MainPage.dart';
 import 'package:dadding/pages/signup/ProfileSettingPage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -285,10 +288,13 @@ class _InformationPageState extends State<InformationPage> {
   }
 
   _onNextButtonPressed() {
-    Get.to(() => ProfileSettingPage(
-      name: _nameController.text,
-      birth: _dateController.text,
-      gender: _selectedGender ?? '남자',
-    ));
+    // Get.to(() => ProfileSettingPage(
+    //   name: _nameController.text,
+    //   birth: _dateController.text,
+    //   gender: _selectedGender ?? '남자',
+    // ));
+
+    UserApi().createUser(_nameController.text, FirebaseAuth.instance.currentUser!.photoURL ?? '', _dateController.text, _selectedGender ?? '남자');
+    Get.offAll(() => const MainPage());
   }
 }
