@@ -75,9 +75,9 @@ class _HomePageState extends State<HomePage> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const PostListSkeleton();
                     } else if (snapshot.hasError) {
-                      return Center(child: Text(snapshot.error.toString()),);
+                      return Container();
                     } else if (!snapshot.hasData) {
-                      return const Center(child: Text('데이터를 불러오지 못했습니다.'));
+                      return Container();
                     } else {
                       final posts = snapshot.data!['posts'] as List<Post>;
                       final postsWithUsers = snapshot.data!['postsWithUsers'] as Map<String, custom.User>;
@@ -138,9 +138,11 @@ class PostListSection extends StatelessWidget {
                   title: post.title,
                   content: post.content,
                   tags: post.tags,
+                  userId: user.id,
                   author: '${user.displayName.substring(0, 1)}**',
                   authorInfo: '${custom.User.calculateAge(DateFormat('yyyy.MM.dd').format(user.birthDate))}세 / ${user.gender == 'male' ? '남' : '기타'}',
                   commentCount: post.commentCount,
+                  imageUrl: user.profilePicture,
                 ),
               );
             },

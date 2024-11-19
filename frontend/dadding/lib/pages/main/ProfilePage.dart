@@ -65,9 +65,9 @@ class _ProfilePageState extends State<ProfilePage> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const ProfileSkeleton();
             } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
+              return Container();
             } else if (!snapshot.hasData) {
-              return const Center(child: Text('데이터를 불러오지 못했습니다.'));
+              return Container();
             }
 
             final user = snapshot.data!['user'] as custom.User;
@@ -152,9 +152,9 @@ class UserInfo extends StatelessWidget {
       },
       child: Row(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 42,
-            backgroundImage: NetworkImage("https://via.placeholder.com/84x84"),
+            backgroundImage: NetworkImage(user.profilePicture),
           ),
           const SizedBox(width: 19),
           Expanded(
@@ -214,9 +214,11 @@ class PostListSection extends StatelessWidget {
                   title: post.title,
                   content: post.content,
                   tags: post.tags,
+                  userId: user.id,
                   author: user.displayName,
                   authorInfo: "${custom.User.calculateAge(DateFormat('yyyy.MM.dd').format(user.birthDate))}세 / ${user.gender == 'male' ? '남' : '기타'}",
                   commentCount: post.commentCount,
+                  imageUrl: user.profilePicture,
                 ),
               );
             },
