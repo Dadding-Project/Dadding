@@ -1,4 +1,5 @@
 import 'package:dadding/pages/post/PostInnerPage.dart';
+import 'package:dadding/pages/user/OtherUserPage.dart';
 import 'package:dadding/widgets/UserTag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -10,9 +11,11 @@ class PostCard extends StatelessWidget {
   final String title;
   final String content;
   final List<String> tags;
+  final String userId;
   final String author;
   final String authorInfo;
   final int commentCount;
+  final String imageUrl;
 
   const PostCard({
     super.key,
@@ -20,9 +23,11 @@ class PostCard extends StatelessWidget {
     required this.title,
     required this.content,
     required this.tags,
+    required this.userId,
     required this.author,
     required this.authorInfo,
     required this.commentCount,
+    required this.imageUrl,
   });
 
   @override
@@ -52,9 +57,14 @@ class PostCard extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const CircleAvatar(
-                    radius: 17,
-                    backgroundImage: NetworkImage("https://via.placeholder.com/34x34"),
+                  GestureDetector(
+                    onTap: () {
+                      Get.to(() => OtherUserPage(userId: userId));
+                    },
+                    child: CircleAvatar(
+                      radius: 17,
+                      backgroundImage: NetworkImage(imageUrl),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
