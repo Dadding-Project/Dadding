@@ -21,14 +21,25 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: ListView.builder(
-        itemCount: chatList.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(chatList[index]),
-          );
-        },
-      ),
+      body: Column(
+        children: [
+          const Divider(
+            height: 1,
+            thickness: 0.5,
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: chatList.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(chatList[index]),
+                );
+              },
+            ),
+          ),
+        ],
+      )
     );
   }
 }
+
